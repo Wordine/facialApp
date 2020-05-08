@@ -8,6 +8,16 @@ from PyQt5.QtGui import *
 gStop = 0
 gRecon = 0
 
+def screamInit(handl):
+        handl.scream = QLabel(self)
+        handl.scream.setText("wait for init.....")
+        handl.scream.setFixedSize(640, 480)
+        handl.scream.move(160, 160)
+        
+        handl.scream.setStyleSheet("QLabel{background:white;}"
+                                 "QLabel{color:rgb(300,300,300,120);font-size:10px;font-weight:bold;font-family:宋体;}"
+                                 )
+
 def streamOut(handl):
     video_capture = cv2.VideoCapture(0)
     print ('subprocess start')

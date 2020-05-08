@@ -14,16 +14,8 @@ class picture(QWidget):
         super(picture, self ).__init__()
         
         self.resize(1280, 720)
-        self.setWindowTitle("label显示图片")
+        self.setWindowTitle("facial recog system")
         
-        self.scream = QLabel(self)
-        self.scream.setText("   显示图片")
-        self.scream.setFixedSize(640, 480)
-        self.scream.move(160, 160)
-        
-        self.scream.setStyleSheet("QLabel{background:white;}"
-                                 "QLabel{color:rgb(300,300,300,120);font-size:10px;font-weight:bold;font-family:宋体;}"
-                                 )
         
         """
         btn = QPushButton(self)
@@ -32,6 +24,7 @@ class picture(QWidget):
         btn.clicked.connect(self.stopStream)
         """
 
+        mainScream.screamInit(self)
         self.leftUI()
         self.upperUI(0)
         self.messageShow('sucessfully start system', 0)
