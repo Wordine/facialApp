@@ -70,10 +70,10 @@ def saveUserFile(userid, type, img):
         image = np.array(img.convert('RGB'))
         m = face_recognition.face_encodings(image, known_face_locations=face_bounding_boxes)[0]
         m= m.tolist()
-        f = img.split('.')
+        #f = img.split('.')
         count = findone['pnum']+1
         imgput = GridFS(db, collection='user_photo')
-        imgput.put(img,user_id = userid,p_num = count,p_aspect = m,p_type=f[-1],p_name = findone['name'])
+        imgput.put(img,user_id = userid,p_num = count,p_aspect = m,p_name = findone['name'])
         
         return sucess
     
@@ -106,4 +106,62 @@ def idVerify (img):
 
     return username, userid
 
+def add_user(imglist, username):
+    X = []
+    X0 = []
+ 
+    b = open(r"X.txt", "r",encoding='UTF-8')
+    outx = b.read()
+    outx =  json.loads(outx)
+    #print(out)
+    for m in outx:
+        X.append(m)
+        m0 = np.array(m)
+        X0.append(m0)
+
+    d = open(r"y.txt", "r",encoding='UTF-8')
+    outy = d.read()
+    y = json.loads(outy)
+
+    #print(out)
+    count = 0
+    userid = '{0:%Y%m%d%H%M%S%f}'.format(datetime.datetime.now()) + ''.join([str(random.randint(1, 10)) for i in range(5)])
+    
+    for img in imglist:
+        image = np.array(img.convert('RGB'))
+        m0 = face_recognition.face_encodings(image, known_face_locations=face_bounding_boxes)[0]
+        m = m0.tolist()
+
+        count += 1
+        imgput = GridFS(db, collection='user_photo')
+        imgput.put(img,user_id = userid,p_num = count,p_aspect = m,p_name = username)
+
+        X.append(m)
+        X0.append(m0)
+        y.append(userid)
+    
+    user1 = {'name': username, 'user_id': userid, 'pnum': count}
+    col = db.user
+    one_insert = col.insert_one(user1)
+    
+        # Create and train the KNN classifier
+    knn_clf = neighbors.KNeighborsClassifier(n_neighbors=2, algorithm='ball_tree', weights='distance')
+    knn_clf.fit(X0, y)
+
+    # Save the trained KNN classifier
+    with open("trained_knn_model.clf", 'wb') as f:
+        pickle.dump(knn_clf, f)
+
+    xx = json.dumps(X)
+    yy = json.dumps(y)
+
+    a = open(r"X.txt", "w",encoding='UTF-8')
+    a.write(xx)
+    a.close()
+
+    c= open(r"y.txt", "w",encoding='UTF-8')
+    c.write(yy)
+    c.close()
+
+    return success
 
