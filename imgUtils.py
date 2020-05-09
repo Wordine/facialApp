@@ -23,7 +23,7 @@ def imgTrans(img, method, arg):
     return imgT
     
     
-def idVerify (img):
+def idVerify (code):
     uername = ''
 
 
