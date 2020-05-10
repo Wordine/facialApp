@@ -6,7 +6,7 @@ from PyQt5.QtCore import *
 
 import mainScream
 import imgUtils
-
+import numpy as np
 global my
 
 class picture(QWidget):
@@ -16,142 +16,174 @@ class picture(QWidget):
         self.resize(1280, 720)
         self.setWindowTitle("facial recog system")
         
-        
-        """
-        btn = QPushButton(self)
-        btn.setText("打开图片")
-        btn.move(10, 30)
-        btn.clicked.connect(self.stopStream)
-        """
-
         mainScream.screamInit(self)
-        self.leftUI()
-        self.upperUI(0)
         self.messageShow('sucessfully start system', 0)
-        self.rightUI(0)
-
+        self.menuInit(0)
+        self.toolbarInit(0)
 
         self.startStream()
         
-    def openimage(self):
-        imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "*.jpg;;*.png;;All Files(*)")
-        print(imgName)
-        print(imgType)
-        jpg = QtGui.QPixmap(imgName).scaled(self.scream.width(), self.scream.height())
-        self.scream.setPixmap(jpg)
-        
-    #status 1:wait for camera to catch a photo
-    #status 2:catched a photo
+    #status 0:camera 
+    #status 1:catched a photo
     def loginProcess(self):
-        self.checkList = []
-        if self.status == 1:
+        checklist = []
+        if mainScream.getStreamStatus() == 0:
+            mainScream.streamEnd()
+
             idIMG = self.frame
-            self.scream.setPixmap(idIMG)
-            self.checkList = idVerify (idIMG)
 
-            ###Create Combo Box###
+            image = Image.fromarray(cv2.cvtColor(idIMG,cv2.COLOR_BGR2RGB))
+            jpg = image.toqpixmap()
+            self.scream.setPixmap(jpg)
             
-        elif self.status == 2:
-            # when new guy sign in
-            if new guy:
-            elif old guy:
-                # the old guy
-                for x in self.checkList:
-                    if x.name == self.checkName:
-                        IMG = x.IMG
-                        name = x.name
-                        break
-            
-            ###show message to user to check###
-            if pass:
+        elif mainScream.getStreamStatus() == 1:
+            idIMG = self.frame
+            pass
+
+        img = idIMG[:, :, ::-1]
+        locations = face_recognition.face_locations(img, model = 'cnn')
+        encodings = face_recognition.face_encodings(img, locations)
+
+        checklist = []
+        for (top, right, bottom, left), code in zip(locations, encodings):
+            username, userid = imgUtils.idVerify(code)
+            img_slice = idIMG[top:bottom, left:right]
+            userinfo["userid"]   = userid
+            userinfo["username"] = username
+            userinfo["img"]      = img_slice
+            userinfo["code"]     = code
+            checklist.append(userinfo)
+
+        dialog = QtWidgets.QDialog()
+        ui = imgSelect.Ui_imgSelect()
+        ui.setupUi(dialog, checklist)
+        ret = dialog.exec_()
+        if ret == 0:
+            self.startStream()
+
+        elif ret == 1:
+            idx = ui.comboBox.currentIndex()
+            userinfo = checklist[idx]
+            if userid == 0:
+                #create new user
+
             else:
-                self.statusJumper (1)
+                self.userinfo = userinfo
+            self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
+            if len(self.userFileList) == 0:
+                #blank mainScream
+                self.idx = -1
+            else:
+                #show first img
+                self.idx = 0 
 
+    def loginFromImg(self):
+        imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "*.jpg;;*.png;;All Files(*)")
+        if imgName == "":
+            return 0
+        imgName = imgName.convertToFormat(QImage.Format.Format_RGBA8888)
+        width = imgName.width()
+        height = imgName.height()
+        ptr = imgName.bits()
+        ptr.setsize(height * width * 4)
+        self.frame = np.frombuffer(ptr, np.uint8).reshape((height, width, 4))
+
+        jpg = QtGui.QPixmap(imgName).scaled(self.scream.width(), self.scream.height())
+        self.stopStream()
+        self.scream.setPixmap(jpg)
+
+    def loginFromStream(self):
+        self.startStream()
+
+    def logoutProcess(self):
+        self.userinfo = []
+        self.idx = -1
+        self.toolbarInit(0)
+        self.menuInit(0)
+
+
+    def addImg(self):
+        if mainScream.getStreamStatus == 0:
+            mainScream.streamEnd()
+
+            idIMG = self.frame
+            image = Image.fromarray(cv2.cvtColor(idIMG,cv2.COLOR_BGR2RGB))
+            jpg = image.toqpixmap()
+            self.scream.setPixmap(jpg)
             
+        elif mainScream.getStreamStatus == 1:
+            idIMG = self.frame
+            pass
 
-        
-        
-    #type 1:Origin    type 2:transformed
-    def showPhotoList(self, type):
-        
+        imgUtils.saveUserFile(idIMG)
+        self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
+        self.idx = len(self.userFileList) - 1
+
     def photoTransProcess(self, arg):
         img = methodUtils.callMethod (self.frame, self.checkMethod, arg)
 
         imgUtils.saveUserFile(self.userid, 2, img)
-        
-        
-    def selectCheckName(self, name):
-        self.checkName = name
 
     def selectTransMethod(self, method):
-        self.checkMethod = method
-        ###flush rightUI###
     
-    """
-    0:camera stream
+    def selectImg(self):
+        if self.userFileList == "":
+            self.messageShow("you should add your img first!", 1)
+            return 0
+        dialog = QtWidgets.QDialog()
+        ui = imgSelect.Ui_imgSelect()
+        ui.setupUi(dialog, self.userFileList)
+        ret = dialog.exec_()
+        if ret == 0:
+            return 0
+        else
+            self.idx = ui.comboBox.currentIndex() 
+            self.frame = self.userFileList[0]["img"]
+            image = Image.fromarray(cv2.cvtColor(self.frame,cv2.COLOR_BGR2RGB))
+            jpg = QtGui.QPixmap(image).scaled(self.scream.width(), self.scream.height())
+            self.scream.setPixmap(jpg)
 
-    1:captured img
+    
 
-    2:login sucessfully
-
-    3:selected method
-    """
-    def statusJumper (self, flag):
-        if flag == 0:
-            # give up captured img
-
-            # logout
-
-
-        elif flag == 1:
-            #camera catch a photo
-            #choose to open a image
-
-        elif flag == 2:
-            #sucessfully login
-            #sucessfully transformed
-
-        elif flag == 3:
-            #select a method
-
-        else:
-            self.messageShow('STATUS JUMPER ERROR, wrong flag' + str(flag), 2)
-        
     #flag 0:init  1:normal message  2:warring message
     def messageShow(self, message, flag):
 
-    def leftUI (self):
-        switchRecogBtn
-    
     #flag 0:init  1:unverfied  2:verified
-    def upperUI (self, flag):
-        inputMethodMenu
+    def menuInit(self, flag):
+        self.menubar.clear()
+        
+        sourceMenu = self.menubar.addMenu('Source')
+        recogMenu  = self.menubar.addMenu('high light')
+            
+    #flag 0:init   1:before login    2:login
+    def toolbarInit(self, flag):
 
-        logoutMenu
+    def actionInit(self):
+        self.statusBar()
 
-        imgTypeSelectMenu
+        self.menubar = self.menuBar()
 
+        self.loginAction        = 
+        self.regFromVideoAction = 
+        self.regFromImgAction   = 
 
-    #flag 0:init   1:return camera   2:captured img   3:origin   4:selected method    
-    def rightUI (self, flag):
-        loginBtn
+        self.exitActionAction   =
+        self.addFromImgAction   =
+        self.addFromVideoAction =
 
-        selectNameCombo
-
-        selectMethodCombo
-
-
+        self.selectImgAction    =
+        self.tranImgAction      =
 
     def startStream(self):
-        print('enter subprocess')
+        print("enter subprocess")
         mainScream.streamStart(self)
 
     def stopStream(self):
         print('send stop signal')
         mainScream.streamEnd()
 
-    def setRecog(self):
-        mainScream.setRecogFlag(flag)
+    def switchRecog(self):
+        mainScream.switchRecogFlag()
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
