@@ -76,6 +76,8 @@ class picture(QWidget):
             else:
                 #show first img
                 self.idx = 0 
+            self.menuInit(1)
+            selg.toolbarInit(1)
 
     def loginFromImg(self):
         imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "*.jpg;;*.png;;All Files(*)")
@@ -98,8 +100,8 @@ class picture(QWidget):
     def logoutProcess(self):
         self.userinfo = []
         self.idx = -1
-        self.toolbarInit(0)
-        self.menuInit(0)
+        self.toolbarInit(2)
+        self.menuInit(2)
 
 
     def addImg(self):
@@ -147,32 +149,97 @@ class picture(QWidget):
 
     #flag 0:init  1:normal message  2:warring message
     def messageShow(self, message, flag):
+        if flag == 0:
+            
+            self.messagelb = 
+        elif flag == 1:
+
+        elif flag == 2:
 
     #flag 0:init  1:unverfied  2:verified
     def menuInit(self, flag):
-        self.menubar.clear()
+
+        if flag == 0:
+            self.menubar = self.menuBar()
+            sourceMenu = self.menubar.addMenu('Source')
+            sourceMenu.addAction(self.regFromImgAction)
+            sourceMenu.addAction(self.regFromVideoAction)
+
+            recogMenu = self.menubar.addMenu('high light')
+            recogMenu.addAction(self.switchRecogAction)
+
+        elif flag == 1:
+            self.menubar.clear()
+            sourceMenu = self.menubar.addMenu('Source')
+            sourceMenu.addAction(self.regFromImgAction)
+            sourceMenu.addAction(self.regFromVideoAction)
+        elif flag == 2:
+            self.menubar.clear()
+            sourceMenu = self.menubar.addMenu('Source')
+            sourceMenu.addAction(self.regFromImgAction)
+            sourceMenu.addAction(self.regFromVideoAction)
+
+            recogMenu = self.menubar.addMenu('high light')
+            recogMenu.addAction(self.switchRecogAction)
         
-        sourceMenu = self.menubar.addMenu('Source')
-        recogMenu  = self.menubar.addMenu('high light')
-            
     #flag 0:init   1:before login    2:login
     def toolbarInit(self, flag):
+        if flag == 0:
+            self.loginBar = self.addToolBar('login')
+            self.loginBar.addAction(self.loginAction)
+
+        elif flag == 1:
+            self.loginBar.clear()
+            self.loginBar = self.addToolBar('logout')
+            self.loginBar .addAction(self.exitActionAction)
+            self.addImgBar = self.addToolBar('add')
+            self.addImgBar.addAction(self.addImgAction)
+            self.selectImgBar = self.addToolBar('select img')
+            self.selectImgBar.addAction(self.selectImgAction)
+            self.transBar = self.addToolBar('select method')
+            self.transBar.addAction(self.tranImgAction)
+
+        elif flag == 2:
+            self.loginBar.clear()
+            self.addImgBar.clear()
+            self.selectImgBar.clear()
+            self.transBar.clear()
+
+            self.loginBar = self.addToolBar('login')
+            self.loginBar.addAction(self.loginAction)
 
     def actionInit(self):
         self.statusBar()
 
         self.menubar = self.menuBar()
 
-        self.loginAction        = 
-        self.regFromVideoAction = 
-        self.regFromImgAction   = 
+        self.loginAction = QAction(QIcon('icon/1222569.png'), 'login', self)
+        self.loginAction.setStatusTip('login in')
+        self.loginAction.triggered.connect(self.loginProcess)
+        self.regFromVideoAction = QAction(QIcon('icon/1222540.png'), 'video', self)
+        self.regFromVideoAction.setStatusTip('load img from video')
+        self.regFromVideoAction.triggered.connect(self.loginFromStream)
+        self.regFromImgAction = QAction(QIcon('icon/1222831.png'), 'file', self)
+        self.regFromImgAction.setStatusTip('load img from file')
+        self.regFromImgAction.triggered.connect(self.loginFromImg)
 
-        self.exitActionAction   =
-        self.addFromImgAction   =
-        self.addFromVideoAction =
+        self.exitActionAction = QAction(QIcon('icon/1222539.png'), 'exit', self)
+        self.exitActionAction.setStatusTip('logout')
+        self.exitActionAction.triggered.connect(self.logoutProcess)
+        self.addImgAction = QAction(QIcon('icon/1222532.png'), 'add', self)
+        self.addImgAction.setStatusTip('add img')
+        self.addImgAction.triggered.connect(self.addImg)
 
-        self.selectImgAction    =
-        self.tranImgAction      =
+        self.selectImgAction = QAction(QIcon('icon/1222538.png'), 'select img', self)
+        self.selectImgAction.setStatusTip('select an img from your files')
+        self.selectImgAction.triggered.connect(self.selectImg)
+        self.tranImgAction = QAction(QIcon('icon/1222534.png'), 'transform', self)
+        self.tranImgAction.setStatusTip('tranform your img')
+        self.tranImgAction.triggered.connect(self.photoTransProcess)
+
+        self.switchRecogAction = QAction(QIcon('icon/1222531.png'), 'switch', self)
+        self.switchRecogAction.setStatusTip('switch recog set')
+        self.switchRecogAction.triggered.connect(self.switchRecog)
 
     def startStream(self):
         print("enter subprocess")
