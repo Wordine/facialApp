@@ -32,30 +32,53 @@ def getUserFile(userid, type):
         gridFS1 = GridFS(db, collection='user_photo')
         u_photo = gridFS1.find({'user_id':userid})
         for pic in u_photo:
+            p_user = pic.pname
+            p_hash = pic.phash
+            p_id = pic.pid
+            p_date = pic.pdate
             data = pic.read()
             image = Image.open(io.BytesIO(data))
-            imglist.append(image)
+            image = np.array(image)
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            imglist.append(dic)
     elif type == '2':
         gridFS2 = GridFS(db, collection='user_trans')
         u_photo = gridFS2.find({'user_id':userid})
         for pic in u_photo:
+            p_user = pic.username
+            p_hash = pic.phash
+            p_id = pic.pid
+            p_date = pic.pdate
             data = pic.read()
             image = Image.open(io.BytesIO(data))
-            imglist.append(image)
+            image = np.array(image)
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            imglist.append(dic)
     elif type == '3':
         gridFS1 = GridFS(db, collection='user_photo')
         u_photo = gridFS1.find({'user_id':userid})
         for pic in u_photo:
+            p_user = pic.username
+            p_hash = pic.phash
+            p_id = pic.pid
+            p_date = pic.pdate
             data = pic.read()
             image = Image.open(io.BytesIO(data))
-            imglist.append(image)
+            image = np.array(image)
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            imglist.append(dic)
             
         gridFS2 = GridFS(db, collection='user_trans')
-        u_photo = gridFS2.find({'user_id':userid})
         for pic in u_photo:
+            p_user = pic.username
+            p_hash = pic.phash
+            p_id = pic.pid
+            p_date = pic.pdate
             data = pic.read()
             image = Image.open(io.BytesIO(data))
-            imglist.append(image)
+            image = np.array(image)
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            imglist.append(dic)
     else: return false       
     return imglist
     
@@ -64,21 +87,28 @@ def getUserFile(userid, type):
 def saveUserFile(userid, type, img):
     
     #1 for sucess   2 for failure
-    
+    fpath = 'K:\\face\\86_IMDB-WIKI\\user'
+    setDir(fpath)
+
     if type == '1':
         findone = col.find_one({'user_id': userid})
-        image = np.array(img.convert('RGB'))
-        m = face_recognition.face_encodings(image, known_face_locations=face_bounding_boxes)[0]
-        m= m.tolist()
         #f = img.split('.')
+        img = Image.fromarray(np.uint8(img)).convert('RGB')
+        img.save(fpath + '\\' + findone['name'] + '.png ')
+        datatamp=open(fpath + '\\' + findone[' name '] + '.png ')
+        pdate = '{0:%Y%m%d%H%M%S}'.format(datetime.datetime.now())
+        pid = '{0:%Y%m%d%H%M%S%f}'.format(datetime.datetime.now()) + ''.join([str(random.randint(1, 10)) for i in range(5)])
+        phash = hash(pid)
+        
         count = findone['pnum']+1
         imgput = GridFS(db, collection='user_photo')
-        imgput.put(img,user_id = userid,p_num = count,p_aspect = m,p_name = findone['name'])
+        imgput.put(datatamp, user_id=userid, pname=findone['name'],phash = phash,pdate = pdate,pid = pid)
+        col.update({'user_id':userid},{'$inc':{'pnum':+1}})
         
-        return sucess
+        return 1
     
     elif type == '2': 
-        return failure
+        return 0
     else return false
     
     
@@ -108,60 +138,55 @@ def idVerify (img):
 
 def add_user(imglist, username):
     X = []
-    X0 = []
- 
-    b = open(r"X.txt", "r",encoding='UTF-8')
-    outx = b.read()
-    outx =  json.loads(outx)
-    #print(out)
-    for m in outx:
-        X.append(m)
-        m0 = np.array(m)
-        X0.append(m0)
+    X0=[]
+    y = []
 
-    d = open(r"y.txt", "r",encoding='UTF-8')
-    outy = d.read()
-    y = json.loads(outy)
-
-    #print(out)
-    count = 0
     userid = '{0:%Y%m%d%H%M%S%f}'.format(datetime.datetime.now()) + ''.join([str(random.randint(1, 10)) for i in range(5)])
-    
-    for img in imglist:
-        image = np.array(img.convert('RGB'))
-        m0 = face_recognition.face_encodings(image, known_face_locations=face_bounding_boxes)[0]
-        m = m0.tolist()
 
-        count += 1
-        imgput = GridFS(db, collection='user_photo')
-        imgput.put(img,user_id = userid,p_num = count,p_aspect = m,p_name = username)
-
-        X.append(m)
-        X0.append(m0)
-        y.append(userid)
-    
-    user1 = {'name': username, 'user_id': userid, 'pnum': count}
+    user1 = {'name': username, 'user_id': userid, 'pnum': 0,'uaspact':img.tolist()}
     col = db.user
     one_insert = col.insert_one(user1)
+
+    if os.path.exists('X.txt'):
+        b = open(r"X.txt", "r",encoding='UTF-8')
+        outx = b.read()
+        outx =  json.loads(outx)
+        #print(out)
+        for m in outx:
+            X.append(m)
+            m0 = np.array(m)
+            X0.append(m0)
+
+        d = open(r"y.txt", "r",encoding='UTF-8')
+        outy = d.read()
+        y = json.loads(outy)
     
-        # Create and train the KNN classifier
+    X0.append(img)
+    X.append(img.tolist())
+    y.append(userid)
+
     knn_clf = neighbors.KNeighborsClassifier(n_neighbors=2, algorithm='ball_tree', weights='distance')
     knn_clf.fit(X0, y)
 
     # Save the trained KNN classifier
     with open("trained_knn_model.clf", 'wb') as f:
         pickle.dump(knn_clf, f)
-
+    
     xx = json.dumps(X)
     yy = json.dumps(y)
 
-    a = open(r"X.txt", "w",encoding='UTF-8')
+    a = open(r"X.txt", "w+",encoding='UTF-8')
     a.write(xx)
     a.close()
 
-    c= open(r"y.txt", "w",encoding='UTF-8')
+    c= open(r"y.txt", "w+",encoding='UTF-8')
     c.write(yy)
     c.close()
 
-    return success
+    return 1
 
+def del_pic(pid,userid):
+    gridFS = GridFS(db, collection='user_photo')
+    gridFS.delete('pid': pid)
+    col.update({'user_id':userid},{'$inc':{'pnum':-1}})
+    return 1
