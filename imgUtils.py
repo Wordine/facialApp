@@ -85,8 +85,10 @@ def getUserFile(userid, type):
 
 #type only allow for 1, 2
 def saveUserFile(userid, type, img):
+
     
     #1 for sucess   2 for failure
+
     fpath = 'K:\\face\\86_IMDB-WIKI\\user'
     setDir(fpath)
 
@@ -94,8 +96,8 @@ def saveUserFile(userid, type, img):
         findone = col.find_one({'user_id': userid})
         #f = img.split('.')
         img = Image.fromarray(np.uint8(img)).convert('RGB')
-        img.save(fpath + '\\' + findone['name'] + '.png ')
-        datatamp=open(fpath + '\\' + findone[' name '] + '.png ')
+        img.save(fpath + '\\' + findone['name'] + '.png')
+        datatamp=open(fpath + '\\' + findone['name'] + '.png','rb')
         pdate = '{0:%Y%m%d%H%M%S}'.format(datetime.datetime.now())
         pid = '{0:%Y%m%d%H%M%S%f}'.format(datetime.datetime.now()) + ''.join([str(random.randint(1, 10)) for i in range(5)])
         phash = hash(pid)
@@ -103,13 +105,10 @@ def saveUserFile(userid, type, img):
         count = findone['pnum']+1
         imgput = GridFS(db, collection='user_photo')
         imgput.put(datatamp, user_id=userid, pname=findone['name'],phash = phash,pdate = pdate,pid = pid)
-        col.update({'user_id':userid},{'$inc':{'pnum':+1}})
+        col.update_one({'user_id': userid}, {'$inc': {'pnum': +1}})
+        datatamp.close()
         
         return 1
-    
-    elif type == '2': 
-        return 0
-    else return false
     
     
 
@@ -122,21 +121,27 @@ def idVerify (img):
     distance_threshold=0.4
     with open('trained_knn_model.clf', 'rb') as f:
         knn_clf = pickle.load(f)
-    faces_encodings = img
-    closest_distances = knn_clf.kneighbors(faces_encodings, n_neighbors=1)
-    are_matches = [closest_distances[0][i][0] <= distance_threshold]
+    # X_face_locations = face_recognition.face_locations(img)
+    # faces_encodings = face_recognition.face_encodings(img, known_face_locations=X_face_locations)
+
+    closest_distances = knn_clf.kneighbors(img, n_neighbors=1)
+    #print(len(X_face_locations))
+    are_matches = [closest_distances[0][i][0] <= distance_threshold for i in range(1)]
     if are_matches:
-        userid = knn_clf.predict(faces_encodings)
+        userid = knn_clf.predict(img)[0]
+        # print(userid)
+        # print(type(userid))
+        # print(userid[0])
         findone = col.find_one({'user_id': userid})
-        uername = findone['name']
+        username = findone['name']
     else:
         userid = 0
-        username = Unknown
+        username = 'Unknown'
 
 
     return username, userid
 
-def add_user(imglist, username):
+def add_user(img, username):
     X = []
     X0=[]
     y = []
@@ -187,6 +192,7 @@ def add_user(imglist, username):
 
 def del_pic(pid,userid):
     gridFS = GridFS(db, collection='user_photo')
-    gridFS.delete('pid': pid)
-    col.update({'user_id':userid},{'$inc':{'pnum':-1}})
+    id = gridFS.find({'pid':pid})[0]._id
+    gridFS.delete(id)
+    col.update_one({'user_id':userid},{'$inc':{'pnum':-1}})
     return 1
