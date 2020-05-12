@@ -66,9 +66,10 @@ class picture(QWidget):
             userinfo = checklist[idx]
             if userid == 0:
                 #create new user
-
+                pass
             else:
                 self.userinfo = userinfo
+
             self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
             if len(self.userFileList) == 0:
                 #blank mainScream
@@ -127,6 +128,7 @@ class picture(QWidget):
         imgUtils.saveUserFile(self.userid, 2, img)
 
     def selectTransMethod(self, method):
+        return 0
     
     def selectImg(self):
         if self.userFileList == "":
@@ -138,7 +140,7 @@ class picture(QWidget):
         ret = dialog.exec_()
         if ret == 0:
             return 0
-        else
+        else:
             self.idx = ui.comboBox.currentIndex() 
             self.frame = self.userFileList[0]["img"]
             image = Image.fromarray(cv2.cvtColor(self.frame,cv2.COLOR_BGR2RGB))
@@ -150,11 +152,19 @@ class picture(QWidget):
     #flag 0:init  1:normal message  2:warring message
     def messageShow(self, message, flag):
         if flag == 0:
-            
-            self.messagelb = 
+            self.messagelb = QLabel(self)
+            self.messagelb.setFixedSize(200, 480)
+            self.messagelb.move(800, 60)
+            self.messagelb.setStyleSheet("color:black")
+            self.messagelb.setText(message)
+            self.setWordWrap(True)
         elif flag == 1:
+            self.messagelb.setStyleSheet("color:black")
+            self.messagelb.setText(message)
 
         elif flag == 2:
+            self.messagelb.setStyleSheet("color:red")
+            self.messagelb.setText(message)
 
     #flag 0:init  1:unverfied  2:verified
     def menuInit(self, flag):

@@ -18,9 +18,7 @@ def screamInit(handl):
     handl.scream.move(160, 60)
       
     handl.scream.setStyleSheet("QLabel{background:white;}"
-                               "QLabel{color:rgb(300,300,300,120);
-                               font-size:10px;font-weight:bold;
-                               font-family:宋体;}")
+                               "QLabel{font-size:10px;font-weight:bold;font-family:宋体;}")
 
 def streamOut(handl):
     video_capture = cv2.VideoCapture(0)

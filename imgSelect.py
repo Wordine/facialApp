@@ -12,7 +12,7 @@ import sys
 
 
 class Ui_imgSelect(object):
-    def setupUi(self, imgSelect):
+    def setupUi(self, imgSelect, checklist):
         imgSelect.setObjectName("imgSelect")
         imgSelect.resize(738, 544)
         self.buttonBox = QtWidgets.QDialogButtonBox(imgSelect)
@@ -20,20 +20,19 @@ class Ui_imgSelect(object):
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
-        self.graphicsView = QtWidgets.QGraphicsView(imgSelect)
-        self.graphicsView.setGeometry(QtCore.QRect(20, 20, 561, 441))
-        self.graphicsView.setObjectName("graphicsView")
+
+        self.scream = QLabel(self)
+        self.scream.setFixedSize(640, 480)
+        handl.scream.move( 20, 20)
         
         self.comboBox = QtWidgets.QComboBox(imgSelect)
         self.comboBox.setGeometry(QtCore.QRect(620, 90, 87, 22))
         self.comboBox.setObjectName("comboBox")
-        self.comboBox.addItem("1")
-        self.comboBox.addItem("2")
-        self.comboBox.addItem("3")
-        self.comboBox.addItem("4")
-        self.comboBox.addItem("5")
-        self.comboBox.addItem("6")
-        self.comboBox.addItem("7")
+        
+        self.check = checklist
+        for item in checklist:
+            self.comboBox.addItem(item["username"])
+        self.comboBox.currentIndexChanged.connect(self.comboFlushImg)
         
         self.retranslateUi(imgSelect)
         self.buttonBox.accepted.connect(imgSelect.accept)
@@ -43,7 +42,14 @@ class Ui_imgSelect(object):
     def retranslateUi(self, imgSelect):
         _translate = QtCore.QCoreApplication.translate
         imgSelect.setWindowTitle(_translate("imgSelect", "Dialog"))
-        
+    def comboFlushImg(self):
+        idx = self.comboBox.currentIndex
+
+        image = Image.fromarray(cv2.cvtColor(self.checklist[idx]["img"],cv2.COLOR_BGR2RGB))
+        jpg = image.toqpixmap()
+        self.scream.setPixmap(jpg)
+
+
 def main():
     """
     主函数，用于运行程序
