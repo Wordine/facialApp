@@ -111,10 +111,6 @@ def saveUserFile(userid, type, img):
         return 1
     
     
-
-def imgTrans(img, method, arg):
-    
-    return imgT
     
     
 def idVerify (img):
