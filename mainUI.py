@@ -3,13 +3,14 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PIL import Image
 
 import mainScream
 import imgUtils
 import numpy as np
 global my
 
-class picture(QWidget):
+class picture(QMainWindow):
     def __init__(self):
         super(picture, self ).__init__()
         
@@ -18,6 +19,7 @@ class picture(QWidget):
         
         mainScream.screamInit(self)
         self.messageShow('sucessfully start system', 0)
+        self.actionInit()
         self.menuInit(0)
         self.toolbarInit(0)
 
@@ -157,7 +159,7 @@ class picture(QWidget):
             self.messagelb.move(800, 60)
             self.messagelb.setStyleSheet("color:black")
             self.messagelb.setText(message)
-            self.setWordWrap(True)
+            # self.setWordWrap(True)
         elif flag == 1:
             self.messagelb.setStyleSheet("color:black")
             self.messagelb.setText(message)

@@ -4,15 +4,18 @@ import numpy as np
 from PIL import Image
 import threading
 import time
-from PyQt5.QtGui import *
 
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import imgUtils
 
 gStop = 0
 gRecon = 0
 
 def screamInit(handl):
-    handl.scream = QLabel(self)
+    handl.scream = QLabel(handl)
     handl.scream.setText("wait for init.....")
     handl.scream.setFixedSize(640, 480)
     handl.scream.move(160, 60)
