@@ -86,10 +86,10 @@ def getUserFile(userid, type):
 #type only allow for 1, 2
 def saveUserFile(userid, type, img):
 
-    
+    col = db.user
     #1 for sucess   2 for failure
 
-    fpath = 'K:\\face\\86_IMDB-WIKI\\user'
+    fpath = 'D:\\face\\86_IMDB-WIKI\\user'
     setDir(fpath)
 
     if type == '1':
@@ -114,12 +114,13 @@ def saveUserFile(userid, type, img):
     
     
 def idVerify (img):
-    distance_threshold=0.4
+    col = db.user
+    distance_threshold=1
     with open('trained_knn_model.clf', 'rb') as f:
         knn_clf = pickle.load(f)
     # X_face_locations = face_recognition.face_locations(img)
     # faces_encodings = face_recognition.face_encodings(img, known_face_locations=X_face_locations)
-
+    img = img.reshape (1, -1)
     closest_distances = knn_clf.kneighbors(img, n_neighbors=1)
     #print(len(X_face_locations))
     are_matches = [closest_distances[0][i][0] <= distance_threshold for i in range(1)]

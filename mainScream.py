@@ -41,7 +41,7 @@ def streamOut(handl):
             rgb_small_frame = small_frame[:, :, ::-1]
             face_locations = face_recognition.face_locations(rgb_small_frame, model = 'cnn')
             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-
+            face_names = []
             for codes in face_encodings:
 
                 name, userid = imgUtils.idVerify (codes)
