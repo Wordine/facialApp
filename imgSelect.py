@@ -8,11 +8,17 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import sys
+from PIL import Image
+import cv2
 
 
 class Ui_imgSelect(object):
-    def setupUi(self, imgSelect, checklist):
+    # flag:0 who   flag:1 which picture
+    def setupUi(self, imgSelect, checklist, flag):
         imgSelect.setObjectName("imgSelect")
         imgSelect.resize(738, 544)
         self.buttonBox = QtWidgets.QDialogButtonBox(imgSelect)
@@ -21,9 +27,8 @@ class Ui_imgSelect(object):
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
 
-        self.scream = QLabel(self)
-        self.scream.setFixedSize(640, 480)
-        handl.scream.move( 20, 20)
+        self.scream = QLabel(imgSelect)
+        self.scream.move( 20, 20)
         
         self.comboBox = QtWidgets.QComboBox(imgSelect)
         self.comboBox.setGeometry(QtCore.QRect(620, 90, 87, 22))
@@ -31,7 +36,10 @@ class Ui_imgSelect(object):
         
         self.check = checklist
         for item in checklist:
-            self.comboBox.addItem(item["username"])
+            if flag == 0:
+                self.comboBox.addItem(item["username"])
+            elif flag == 1:
+                self.comboBox.addItem(item["id"])
         self.comboBox.currentIndexChanged.connect(self.comboFlushImg)
         
         self.retranslateUi(imgSelect)
@@ -39,13 +47,19 @@ class Ui_imgSelect(object):
         self.buttonBox.rejected.connect(imgSelect.reject)
         QtCore.QMetaObject.connectSlotsByName(imgSelect)
 
+        image = self.check[0]["img"]
+        image = Image.fromarray(cv2.cvtColor(image,cv2.COLOR_BGR2RGB))
+        jpg = image.toqpixmap()
+        self.scream.setPixmap(jpg)
+
     def retranslateUi(self, imgSelect):
         _translate = QtCore.QCoreApplication.translate
         imgSelect.setWindowTitle(_translate("imgSelect", "Dialog"))
     def comboFlushImg(self):
         idx = self.comboBox.currentIndex
 
-        image = Image.fromarray(cv2.cvtColor(self.checklist[idx]["img"],cv2.COLOR_BGR2RGB))
+        image = self.check[idx]["img"]
+        image = Image.fromarray(cv2.cvtColor(image,cv2.COLOR_BGR2RGB))
         jpg = image.toqpixmap()
         self.scream.setPixmap(jpg)
 

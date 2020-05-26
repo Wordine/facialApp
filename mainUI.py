@@ -5,10 +5,13 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PIL import Image
 
+import numpy as np
+import cv2
+import face_recognition
+
 import mainScream
 import imgUtils
-import numpy as np
-global my
+import imgSelect
 
 class picture(QMainWindow):
     def __init__(self):
@@ -50,15 +53,12 @@ class picture(QMainWindow):
         for (top, right, bottom, left), code in zip(locations, encodings):
             username, userid = imgUtils.idVerify(code)
             img_slice = idIMG[top:bottom, left:right]
-            userinfo["userid"]   = userid
-            userinfo["username"] = username
-            userinfo["img"]      = img_slice
-            userinfo["code"]     = code
+            userinfo = { 'userid': userid, 'username': username,'img': img_slice, 'code': code}  
             checklist.append(userinfo)
 
         dialog = QtWidgets.QDialog()
         ui = imgSelect.Ui_imgSelect()
-        ui.setupUi(dialog, checklist)
+        ui.setupUi(dialog, checklist, 0)
         ret = dialog.exec_()
         if ret == 0:
             self.startStream()
@@ -71,16 +71,21 @@ class picture(QMainWindow):
                 pass
             else:
                 self.userinfo = userinfo
-
+            # get userfile from db
             self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
+
+            # nothing found in userFiles
             if len(self.userFileList) == 0:
-                #blank mainScream
+                self.scream.setPixmap(QPixmap(""))
                 self.idx = -1
             else:
-                #show first img
+                # display the first img
+                image = self.userFileList[0]["img"]
+                jpg = image.toqpixmap()
+                self.scream.setPixmap(jpg)
                 self.idx = 0 
             self.menuInit(1)
-            selg.toolbarInit(1)
+            self.toolbarInit(1)
 
     def loginFromImg(self):
         imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "*.jpg;;*.png;;All Files(*)")
@@ -133,12 +138,12 @@ class picture(QMainWindow):
         return 0
     
     def selectImg(self):
-        if self.userFileList == "":
+        if len(self.userFileList) == 0:
             self.messageShow("you should add your img first!", 1)
             return 0
         dialog = QtWidgets.QDialog()
         ui = imgSelect.Ui_imgSelect()
-        ui.setupUi(dialog, self.userFileList)
+        ui.setupUi(dialog, self.userFileList, 1)
         ret = dialog.exec_()
         if ret == 0:
             return 0

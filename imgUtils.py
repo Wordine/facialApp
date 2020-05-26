@@ -28,7 +28,7 @@ db = client.face
 def getUserFile(userid, type):
     imglist = []
     
-    if type == '1':
+    if type == 1:
         gridFS1 = GridFS(db, collection='user_photo')
         u_photo = gridFS1.find({'user_id':userid})
         for pic in u_photo:
@@ -41,7 +41,7 @@ def getUserFile(userid, type):
             image = np.array(image)
             dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
             imglist.append(dic)
-    elif type == '2':
+    elif type == 2:
         gridFS2 = GridFS(db, collection='user_trans')
         u_photo = gridFS2.find({'user_id':userid})
         for pic in u_photo:
@@ -54,7 +54,7 @@ def getUserFile(userid, type):
             image = np.array(image)
             dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
             imglist.append(dic)
-    elif type == '3':
+    elif type == 3:
         gridFS1 = GridFS(db, collection='user_photo')
         u_photo = gridFS1.find({'user_id':userid})
         for pic in u_photo:
@@ -79,7 +79,7 @@ def getUserFile(userid, type):
             image = np.array(image)
             dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
             imglist.append(dic)
-    else: return false       
+    else: return Flase
     return imglist
     
 

@@ -13,6 +13,8 @@ import imgUtils
 
 gStop = 0
 gRecon = 0
+gframe0 = []
+gimg1 = []
 
 def screamInit(handl):
     handl.scream = QLabel(handl)
@@ -28,11 +30,14 @@ def streamOut(handl):
     print ('subprocess start')
     while True:
         ret, frame = video_capture.read()
-        handl.frame = frame
+        global gframe0
+        gframe0 = frame
         
         global gStop
         if gStop :
             print ('STREAM END!')
+            global gpid
+            gpid = 0
             break
  
         global gRecon
@@ -59,6 +64,7 @@ def streamOut(handl):
                 font = cv2.FONT_HERSHEY_DUPLEX
                 cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
+        handl.frame = frame
         image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
         
         jpg = image.toqpixmap()
@@ -68,14 +74,21 @@ def streamOut(handl):
 
 def streamEnd():
     print ('STREAM SIGNAL!')
-    global gStop
+    global gStop, t
     gStop = 1
+    try:
+        t.jion()
+    except Exception as e:
+        pass
     
 def streamStart(handlUI):
     inter=[]
     inter.append(handlUI)
+    global t
     t= threading.Thread(target=streamOut, args=inter)
     t.setDaemon(True)
+
+    gStop = 0
     t.start()
 
 def getStreamStatus():
