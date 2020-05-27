@@ -38,9 +38,13 @@ class Ui_imgSelect(object):
         for item in checklist:
             if flag == 0:
                 self.comboBox.addItem(item["username"])
+                self.comboBox.currentIndexChanged.connect(self.comboFlushImg)
             elif flag == 1:
                 self.comboBox.addItem(item["id"])
-        self.comboBox.currentIndexChanged.connect(self.comboFlushImg)
+                self.comboBox.currentIndexChanged.connect(self.comboFlushImg)
+            elif flag == 2:
+                self.comboBox.addItem(item["name"])
+        
         
         self.retranslateUi(imgSelect)
         self.buttonBox.accepted.connect(imgSelect.accept)

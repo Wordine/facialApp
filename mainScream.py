@@ -9,13 +9,16 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+
+import methodUtils
 import imgUtils
 
 gStop = 0
 gRecon = 0
-gframe0 = []
-gimg1 = []
-
+gFrame = []
+gImg = []
+gName = ''
+gArgs = ''
 def screamInit(handl):
     handl.scream = QLabel(handl)
     handl.scream.setText("wait for init.....")
@@ -30,8 +33,8 @@ def streamOut(handl):
     print ('subprocess start')
     while True:
         ret, frame = video_capture.read()
-        global gframe0
-        gframe0 = frame
+        global gFrame
+        gFrame = frame
         
         global gStop
         if gStop :
@@ -63,9 +66,15 @@ def streamOut(handl):
                 cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
                 font = cv2.FONT_HERSHEY_DUPLEX
                 cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+            image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
+        else:
+            global gName
+            global gArgs
+            image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
+            image = methodUtils.callMethod(image, gName, gArgs)
 
-        handl.frame = frame
-        image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
+        global gImg 
+        gImg = image
         
         jpg = image.toqpixmap()
         
@@ -88,6 +97,7 @@ def streamStart(handlUI):
     t= threading.Thread(target=streamOut, args=inter)
     t.setDaemon(True)
 
+    global gStop
     gStop = 0
     t.start()
 
@@ -99,6 +109,30 @@ def switchRecogFlag ():
     global gRecon
     gRecon = not gRecon
 
+def setTrans(name, args):
+    global gName
+    global gArgs
+    gName = name
+    gArgs = args
+def getOriFrame():
+    global gFrame
+    return gFrame
 
+def getAfterImg():
+    global gImg
+    return gImg
 
+def setFrame(handl, frame):
+    if gStop == 0:
+        streamEnd()
+    image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
+    global gName
+    global gArgs
+    jpg = image.toqpixmap()
+    jpg = jpg.scaled(handl.scream.width(), handl.scream.height())
+    handl.scream.setPixmap(jpg)
 
+def cleanScream(handl):
+    if gStop == 0:
+        streamEnd()
+    handl.scream.setPixmap(QPixmap(""))

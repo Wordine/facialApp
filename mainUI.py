@@ -12,6 +12,7 @@ import face_recognition
 import mainScream
 import imgUtils
 import imgSelect
+import methodUtils
 
 class picture(QMainWindow):
     def __init__(self):
@@ -34,15 +35,12 @@ class picture(QMainWindow):
         checklist = []
         if mainScream.getStreamStatus() == 0:
             mainScream.streamEnd()
+            idIMG = mainScream.getOriFrame()
+            mainScream.setFrame(self, idIMG)
 
-            idIMG = self.frame
-
-            image = Image.fromarray(cv2.cvtColor(idIMG,cv2.COLOR_BGR2RGB))
-            jpg = image.toqpixmap()
-            self.scream.setPixmap(jpg)
             
         elif mainScream.getStreamStatus() == 1:
-            idIMG = self.frame
+            idIMG = mainScream.getOriFrame()
             pass
 
         img = idIMG[:, :, ::-1]
@@ -67,8 +65,7 @@ class picture(QMainWindow):
             idx = ui.comboBox.currentIndex()
             userinfo = checklist[idx]
             if userid == 0:
-                #create new user
-                pass
+                self.addUser()
             else:
                 self.userinfo = userinfo
             # get userfile from db
@@ -76,13 +73,12 @@ class picture(QMainWindow):
 
             # nothing found in userFiles
             if len(self.userFileList) == 0:
-                self.scream.setPixmap(QPixmap(""))
-                self.idx = -1
+                self.idx = 0
+                mainScream.cleanScream(self)
             else:
                 # display the first img
-                image = self.userFileList[0]["img"]
-                jpg = image.toqpixmap()
-                self.scream.setPixmap(jpg)
+                frame = self.userFileList[0]["img"]
+                mainScream.setFrame(self, frame)
                 self.idx = 0 
             self.menuInit(1)
             self.toolbarInit(1)
@@ -96,13 +92,14 @@ class picture(QMainWindow):
         height = imgName.height()
         ptr = imgName.bits()
         ptr.setsize(height * width * 4)
-        self.frame = np.frombuffer(ptr, np.uint8).reshape((height, width, 4))
+        frame = np.frombuffer(ptr, np.uint8).reshape((height, width, 4))
 
-        jpg = QtGui.QPixmap(imgName).scaled(self.scream.width(), self.scream.height())
-        self.stopStream()
-        self.scream.setPixmap(jpg)
+        mainScream.setFrame(self, frame)
+
 
     def loginFromStream(self):
+        if mainScream.getStreamStatus == 0:
+            return 0
         self.startStream()
 
     def logoutProcess(self):
@@ -110,32 +107,32 @@ class picture(QMainWindow):
         self.idx = -1
         self.toolbarInit(2)
         self.menuInit(2)
+        mainScream.setTrans()
+        if mainScream.getStreamStatus == 1:
+            mainScream.streamStart()
 
 
     def addImg(self):
-        if mainScream.getStreamStatus == 0:
-            mainScream.streamEnd()
+        image = mainScream.getAfterImg()
+        image = np.array(image)
 
-            idIMG = self.frame
-            image = Image.fromarray(cv2.cvtColor(idIMG,cv2.COLOR_BGR2RGB))
-            jpg = image.toqpixmap()
-            self.scream.setPixmap(jpg)
-            
-        elif mainScream.getStreamStatus == 1:
-            idIMG = self.frame
-            pass
-
-        imgUtils.saveUserFile(idIMG)
+        imgUtils.saveUserFile(self.userinfo["userid"], 1, image)
         self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
-        self.idx = len(self.userFileList) - 1
-
-    def photoTransProcess(self, arg):
-        img = methodUtils.callMethod (self.frame, self.checkMethod, arg)
-
-        imgUtils.saveUserFile(self.userid, 2, img)
 
     def selectTransMethod(self, method):
-        return 0
+        mthList = methodList.getMethodList()
+        dialog = QtWidgets.QDialog()
+        ui = imgSelect.Ui_imgSelect()
+        ui.setupUi(dialog, self.userFileList, 2)
+        ret = dialog.exec_()
+        if ret == 0:
+            return 0
+        else:
+            idx = ui.comboBox.currentIndex()
+            name = mthList[idx]["name"]
+            args = mthList[idx]["args"]
+            mainScream.setTrans(name, args)
+
     
     def selectImg(self):
         if len(self.userFileList) == 0:
@@ -148,13 +145,28 @@ class picture(QMainWindow):
         if ret == 0:
             return 0
         else:
-            self.idx = ui.comboBox.currentIndex() 
-            self.frame = self.userFileList[0]["img"]
-            image = Image.fromarray(cv2.cvtColor(self.frame,cv2.COLOR_BGR2RGB))
-            jpg = QtGui.QPixmap(image).scaled(self.scream.width(), self.scream.height())
-            self.scream.setPixmap(jpg)
+            idx = ui.comboBox.currentIndex() 
+            frame = self.userFileList[idx]["img"]
+            if mainScream.getStreamStatus == 0:
+                mainScream.streamEnd()
+            mainScream.setFrame(self, frame)
 
-    
+    def delImg(self):
+        if len(self.userFileList) == 0:
+            self.messageShow("you should add your img first!", 1)
+            return 0
+        dialog = QtWidgets.QDialog()
+        ui = imgSelect.Ui_imgSelect()
+        ui.setupUi(dialog, self.userFileList, 1)
+        ret = dialog.exec_()
+        if ret == 0:
+            return 0
+        else:
+            idx = ui.comboBox.currentIndex() 
+            userid = self.userinfo['userid']
+            pid = self.userFileList[idx]['id']
+            imgUtils.del_pic(pid, userid)
+            self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
 
     #flag 0:init  1:normal message  2:warring message
     def messageShow(self, message, flag):
@@ -213,6 +225,8 @@ class picture(QMainWindow):
             self.addImgBar.addAction(self.addImgAction)
             self.selectImgBar = self.addToolBar('select img')
             self.selectImgBar.addAction(self.selectImgAction)
+            self.delImgBar = self.addToolBar('del img')
+            self.delImgBar.addAction(self.delImgAction)
             self.transBar = self.addToolBar('select method')
             self.transBar.addAction(self.tranImgAction)
 
@@ -250,9 +264,12 @@ class picture(QMainWindow):
         self.selectImgAction = QAction(QIcon('icon/1222538.png'), 'select img', self)
         self.selectImgAction.setStatusTip('select an img from your files')
         self.selectImgAction.triggered.connect(self.selectImg)
+        self.delImgAction = QAction(QIcon('icon/1222526.png'), 'del img', self)
+        self.delImgAction.setStatusTip('del an img from your files')
+        self.delImgAction.triggered.connect(self.delImg)
         self.tranImgAction = QAction(QIcon('icon/1222534.png'), 'transform', self)
-        self.tranImgAction.setStatusTip('tranform your img')
-        self.tranImgAction.triggered.connect(self.photoTransProcess)
+        self.tranImgAction.setStatusTip('select a method')
+        self.tranImgAction.triggered.connect(self.selectTransMethod)
 
         self.switchRecogAction = QAction(QIcon('icon/1222531.png'), 'switch', self)
         self.switchRecogAction.setStatusTip('switch recog set')

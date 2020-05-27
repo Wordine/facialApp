@@ -2,6 +2,7 @@ import io
 import json
 
 import operator
+import shutil
 
 import numpy as np
 #from PIL import Image
@@ -89,10 +90,11 @@ def saveUserFile(userid, type, img):
     col = db.user
     #1 for sucess   2 for failure
 
-    fpath = 'D:\\face\\86_IMDB-WIKI\\user'
+    fpath = 'user'
     setDir(fpath)
-
-    if type == '1':
+    
+    print ('enter save mtehod')
+    if type == 1:
         findone = col.find_one({'user_id': userid})
         #f = img.split('.')
         img = Image.fromarray(np.uint8(img)).convert('RGB')
@@ -107,7 +109,7 @@ def saveUserFile(userid, type, img):
         imgput.put(datatamp, user_id=userid, pname=findone['name'],phash = phash,pdate = pdate,pid = pid)
         col.update_one({'user_id': userid}, {'$inc': {'pnum': +1}})
         datatamp.close()
-        
+        print ('saved')
         return 1
     
     
@@ -193,3 +195,9 @@ def del_pic(pid,userid):
     gridFS.delete(id)
     col.update_one({'user_id':userid},{'$inc':{'pnum':-1}})
     return 1
+def setDir(filepath):
+    if not os.path.exists(filepath):
+        os.mkdir(filepath)
+    else:
+        shutil.rmtree(filepath)
+        os.mkdir(filepath)
