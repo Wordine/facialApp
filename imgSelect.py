@@ -44,6 +44,7 @@ class Ui_imgSelect(object):
                 self.comboBox.currentIndexChanged.connect(self.comboFlushImg)
             elif flag == 2:
                 self.comboBox.addItem(item["name"])
+                self.comboBox.currentIndexChanged.connect(self.comboFlushImg)
         
         
         self.retranslateUi(imgSelect)
@@ -52,7 +53,8 @@ class Ui_imgSelect(object):
         QtCore.QMetaObject.connectSlotsByName(imgSelect)
 
         image = self.check[0]["img"]
-        image = Image.fromarray(cv2.cvtColor(image,cv2.COLOR_BGR2RGB))
+        image = image[:, :, ::-1]
+        image = Image.fromarray(image)
         jpg = image.toqpixmap()
         self.scream.setPixmap(jpg)
 
@@ -60,10 +62,11 @@ class Ui_imgSelect(object):
         _translate = QtCore.QCoreApplication.translate
         imgSelect.setWindowTitle(_translate("imgSelect", "Dialog"))
     def comboFlushImg(self):
-        idx = self.comboBox.currentIndex
+        idx = self.comboBox.currentIndex()
 
         image = self.check[idx]["img"]
-        image = Image.fromarray(cv2.cvtColor(image,cv2.COLOR_BGR2RGB))
+        image = image[:, :, ::-1]
+        image = Image.fromarray(image)
         jpg = image.toqpixmap()
         self.scream.setPixmap(jpg)
 

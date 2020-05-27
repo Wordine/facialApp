@@ -60,14 +60,16 @@ class picture(QMainWindow):
         ret = dialog.exec_()
         if ret == 0:
             self.startStream()
-
         elif ret == 1:
             idx = ui.comboBox.currentIndex()
             userinfo = checklist[idx]
-            if userid == 0:
-                self.addUser()
-            else:
-                self.userinfo = userinfo
+            if userinfo['userid'] == 0:
+                uid = self.addUser(userinfo)
+                userinfo['userid'] = uid
+                if userinfo['userid'] == 0:
+                    self.startStream()
+                    return 0
+            self.userinfo = userinfo
             # get userfile from db
             self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
 
@@ -80,8 +82,20 @@ class picture(QMainWindow):
                 frame = self.userFileList[0]["img"]
                 mainScream.setFrame(self, frame)
                 self.idx = 0 
+            mainScream.setTrans('blank', '')
+            mainScream.cleanRecogFlag()
+
             self.menuInit(1)
             self.toolbarInit(1)
+            self.messageShow('sucessfully login', 0)
+
+    def addUser(self, info):
+        name, okPressed = QInputDialog.getText(self, "Get text","Your name:", QLineEdit.Normal, "")
+        if okPressed and name != '':
+            info['username'] = name
+            return imgUtils.add_user(info['code'],  name)
+        else:
+            return 0
 
     def loginFromImg(self):
         imgName, imgType = QFileDialog.getOpenFileName(self, "打开图片", "", "*.jpg;;*.png;;All Files(*)")
@@ -107,7 +121,7 @@ class picture(QMainWindow):
         self.idx = -1
         self.toolbarInit(2)
         self.menuInit(2)
-        mainScream.setTrans()
+        mainScream.setTrans('blank', '')
         if mainScream.getStreamStatus == 1:
             mainScream.streamStart()
 
@@ -120,10 +134,10 @@ class picture(QMainWindow):
         self.userFileList = imgUtils.getUserFile(self.userinfo["userid"], 3)
 
     def selectTransMethod(self, method):
-        mthList = methodList.getMethodList()
+        mthList = methodUtils.getMethodList()
         dialog = QtWidgets.QDialog()
         ui = imgSelect.Ui_imgSelect()
-        ui.setupUi(dialog, self.userFileList, 2)
+        ui.setupUi(dialog, mthList, 2)
         ret = dialog.exec_()
         if ret == 0:
             return 0
@@ -131,9 +145,13 @@ class picture(QMainWindow):
             idx = ui.comboBox.currentIndex()
             name = mthList[idx]["name"]
             args = mthList[idx]["args"]
-            mainScream.setTrans(name, args)
-
-    
+            if mainScream.getStreamStatus == 0:
+                mainScream.streamEnd(self)
+                mainScream.setTrans(name, args)
+                mainScream.streamStart(self)
+            else :
+                mainScream.setTrans(name, args)
+            
     def selectImg(self):
         if len(self.userFileList) == 0:
             self.messageShow("you should add your img first!", 1)
@@ -235,6 +253,7 @@ class picture(QMainWindow):
             self.addImgBar.clear()
             self.selectImgBar.clear()
             self.transBar.clear()
+            self.delImgBar.clear()
 
             self.loginBar = self.addToolBar('login')
             self.loginBar.addAction(self.loginAction)

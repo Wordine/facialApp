@@ -40,7 +40,7 @@ def getUserFile(userid, type):
             data = pic.read()
             image = Image.open(io.BytesIO(data))
             image = np.array(image)
-            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':p_date,'img':image}
             imglist.append(dic)
     elif type == 2:
         gridFS2 = GridFS(db, collection='user_trans')
@@ -53,20 +53,21 @@ def getUserFile(userid, type):
             data = pic.read()
             image = Image.open(io.BytesIO(data))
             image = np.array(image)
-            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':p_date,'img':image}
             imglist.append(dic)
     elif type == 3:
         gridFS1 = GridFS(db, collection='user_photo')
         u_photo = gridFS1.find({'user_id':userid})
         for pic in u_photo:
-            p_user = pic.username
+            p_user = pic.pname
             p_hash = pic.phash
             p_id = pic.pid
             p_date = pic.pdate
             data = pic.read()
             image = Image.open(io.BytesIO(data))
             image = np.array(image)
-            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            image = image[:, :, ::-1]
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':p_date,'img':image}
             imglist.append(dic)
             
         gridFS2 = GridFS(db, collection='user_trans')
@@ -78,7 +79,7 @@ def getUserFile(userid, type):
             data = pic.read()
             image = Image.open(io.BytesIO(data))
             image = np.array(image)
-            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':pdate,'img':image}
+            dic = {'user':p_user,'hash':p_hash,'id':p_id,'date':p_date,'img':image}
             imglist.append(dic)
     else: return Flase
     return imglist
@@ -117,7 +118,7 @@ def saveUserFile(userid, type, img):
     
 def idVerify (img):
     col = db.user
-    distance_threshold=1
+    distance_threshold=0.4
     with open('trained_knn_model.clf', 'rb') as f:
         knn_clf = pickle.load(f)
     # X_face_locations = face_recognition.face_locations(img)
@@ -126,7 +127,7 @@ def idVerify (img):
     closest_distances = knn_clf.kneighbors(img, n_neighbors=1)
     #print(len(X_face_locations))
     are_matches = [closest_distances[0][i][0] <= distance_threshold for i in range(1)]
-    if are_matches:
+    if are_matches[0]:
         userid = knn_clf.predict(img)[0]
         # print(userid)
         # print(type(userid))
@@ -187,9 +188,10 @@ def add_user(img, username):
     c.write(yy)
     c.close()
 
-    return 1
+    return userid
 
 def del_pic(pid,userid):
+    col = db.user
     gridFS = GridFS(db, collection='user_photo')
     id = gridFS.find({'pid':pid})[0]._id
     gridFS.delete(id)

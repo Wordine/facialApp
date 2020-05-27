@@ -109,6 +109,10 @@ def switchRecogFlag ():
     global gRecon
     gRecon = not gRecon
 
+def cleanRecogFlag ():
+    global gRecon
+    gRecon = 0
+
 def setTrans(name, args):
     global gName
     global gArgs
@@ -128,8 +132,10 @@ def setFrame(handl, frame):
     image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
     global gName
     global gArgs
-    jpg = image.toqpixmap()
+    jpg = methodUtils.callMethod(image, gName, gArgs)
+    jpg = jpg.toqpixmap()
     jpg = jpg.scaled(handl.scream.width(), handl.scream.height())
+    cleanScream(handl)
     handl.scream.setPixmap(jpg)
 
 def cleanScream(handl):
